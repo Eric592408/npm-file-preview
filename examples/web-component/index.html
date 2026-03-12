@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Universal File Preview - Web Component Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html, body {
+        overflow: hidden;
+        height: 100%;
+      }
+      :root {
+        --cyber-bg: #0a0f1e;
+        --cyber-bg-light: #111827;
+        --cyber-primary: #00f5ff;
+        --cyber-secondary: #7b2dff;
+        --cyber-accent: #ff3366;
+        --cyber-success: #00ff9d;
+        --cyber-text: #e0e6ed;
+        --cyber-text-muted: #6b7a90;
+        --cyber-border: rgba(0, 245, 255, 0.2);
+        --cyber-glow: 0 0 20px rgba(0, 245, 255, 0.3);
+      }
+      body {
+        font-family: 'Rajdhani', sans-serif;
+        background: var(--cyber-bg);
+        height: 100%;
+        color: var(--cyber-text);
+      }
+      .cyber-container {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+      }
+      .grid-bg {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-image: 
+          linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+        background-size: 50px 50px;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .scan-line {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--cyber-primary), transparent);
+        animation: scan 4s linear infinite;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0.5;
+      }
+      @keyframes scan {
+        0% { top: 0; opacity: 0; }
+        10% { opacity: 0.5; }
+        90% { opacity: 0.5; }
+        100% { top: 100%; opacity: 0; }
+      }
+      .cyber-header {
+        background: linear-gradient(180deg, rgba(10, 15, 30, 0.95) 0%, rgba(10, 15, 30, 0.8) 100%);
+        border-bottom: 1px solid var(--cyber-border);
+        padding: 20px 30px;
+        position: relative;
+        z-index: 10;
+        backdrop-filter: blur(10px);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .header-glow {
+        position: absolute;
+        top: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 60%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--cyber-primary), transparent);
+        box-shadow: var(--cyber-glow);
+      }
+      .logo-section {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .cyber-icon {
+        width: 50px; height: 50px;
+        border: 2px solid var(--cyber-primary);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 245, 255, 0.1);
+        box-shadow: var(--cyber-glow), inset 0 0 20px rgba(0, 245, 255, 0.1);
+      }
+      .cyber-icon svg {
+        width: 28px; height: 28px;
+        color: var(--cyber-primary);
+      }
+      .cyber-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 4px;
+        color: var(--cyber-primary);
+        text-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+      }
+      .cyber-subtitle {
+        font-size: 14px;
+        color: var(--cyber-text-muted);
+        margin-top: 4px;
+        letter-spacing: 1px;
+      }
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: rgba(0, 255, 157, 0.1);
+        border: 1px solid rgba(0, 255, 157, 0.3);
+        border-radius: 20px;
+      }
+      .status-dot {
+        width: 8px; height: 8px;
+        background: var(--cyber-success);
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+        box-shadow: 0 0 10px var(--cyber-success);
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.8); }
+      }
+      .status-text {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 11px;
+        letter-spacing: 2px;
+        color: var(--cyber-success);
+      }
+      .cyber-content {
+        flex: 1;
+        display: flex;
+        gap: 20px;
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+        width: 100%;
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+        min-height: 0;
+      }
+      .cyber-sidebar {
+        width: 280px;
+        background: linear-gradient(180deg, rgba(17, 24, 39, 0.9) 0%, rgba(10, 15, 30, 0.9) 100%);
+        border: 1px solid var(--cyber-border);
+        border-radius: 16px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        height: fit-content;
+        position: relative;
+        overflow: hidden;
+      }
+      .cyber-sidebar::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--cyber-secondary), var(--cyber-primary), var(--cyber-secondary));
+      }
+      .panel-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 12px;
+        letter-spacing: 2px;
+        color: var(--cyber-primary);
+      }
+      .panel-icon {
+        width: 8px; height: 8px;
+        background: var(--cyber-primary);
+        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      }
+      .file-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .cyber-btn {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        background: rgba(0, 245, 255, 0.05);
+        border: 1px solid rgba(0, 245, 255, 0.2);
+        border-radius: 10px;
+        color: var(--cyber-text);
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 15px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        overflow: hidden;
+      }
+      .cyber-btn:hover {
+        border-color: var(--cyber-primary);
+        background: rgba(0, 245, 255, 0.1);
+        box-shadow: var(--cyber-glow);
+        transform: translateX(5px);
+      }
+      .cyber-btn.active {
+        background: linear-gradient(135deg, rgba(0, 245, 255, 0.2) 0%, rgba(123, 45, 255, 0.2) 100%);
+        border-color: var(--cyber-primary);
+        box-shadow: var(--cyber-glow), inset 0 0 20px rgba(0, 245, 255, 0.1);
+      }
+      .cyber-btn.active .btn-glow {
+        opacity: 1;
+        box-shadow: 0 0 10px var(--cyber-primary);
+        animation: pulse 2s infinite;
+      }
+      .btn-glow {
+        position: absolute;
+        top: 50%;
+        right: 15px;
+        width: 6px; height: 6px;
+        background: var(--cyber-primary);
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      .divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--cyber-border), transparent);
+        margin: 20px 0;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .divider-text {
+        position: absolute;
+        background: var(--cyber-bg-light);
+        padding: 0 15px;
+        font-size: 12px;
+        color: var(--cyber-text-muted);
+        letter-spacing: 1px;
+      }
+      .cyber-input {
+        width: 100%;
+        padding: 12px 16px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--cyber-border);
+        border-radius: 8px;
+        color: var(--cyber-text);
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
+      .cyber-input:focus {
+        outline: none;
+        border-color: var(--cyber-primary);
+        box-shadow: var(--cyber-glow);
+      }
+      .cyber-upload {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 25px;
+        background: rgba(0, 245, 255, 0.03);
+        border: 2px dashed var(--cyber-border);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .cyber-upload:hover {
+        border-color: var(--cyber-primary);
+        background: rgba(0, 245, 255, 0.08);
+      }
+      .upload-text {
+        font-size: 14px;
+        color: var(--cyber-text-muted);
+        letter-spacing: 1px;
+      }
+      .cyber-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .preview-panel {
+        flex: 1;
+        background: linear-gradient(180deg, rgba(17, 24, 39, 0.9) 0%, rgba(10, 15, 30, 0.9) 100%);
+        border: 1px solid var(--cyber-border);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        backdrop-filter: blur(10px);
+        position: relative;
+        min-height: 0;
+      }
+      .preview-panel::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--cyber-primary), var(--cyber-secondary), var(--cyber-accent));
+      }
+      .preview-panel .panel-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--cyber-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0;
+        flex-shrink: 0;
+      }
+      .file-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .file-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--cyber-text);
+      }
+      .meta-badge {
+        padding: 4px 12px;
+        background: rgba(123, 45, 255, 0.2);
+        border: 1px solid rgba(123, 45, 255, 0.4);
+        border-radius: 4px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 11px;
+        letter-spacing: 1px;
+        color: var(--cyber-secondary);
+      }
+      .preview-container {
+        flex: 1;
+        padding: 0;
+        position: relative;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .preview-border {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        pointer-events: none;
+        z-index: 10;
+      }
+      .corner {
+        position: absolute;
+        width: 20px; height: 20px;
+        border: 2px solid var(--cyber-primary);
+      }
+      .corner.tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+      .corner.tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+      .corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+      .corner.br { bottom: 0; right: 0; border-left: none; border-top: none; }
+      #preview-element {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cyber-container">
+      <div class="grid-bg"></div>
+      <div class="scan-line"></div>
+      
+      <header class="cyber-header">
+        <div class="header-glow"></div>
+        <div class="logo-section">
+          <div class="cyber-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <div class="title-section">
+            <h1 class="cyber-title">WEB COMPONENT DEMO</h1>
+            <p class="cyber-subtitle">// Universal File Preview - Native Custom Element</p>
+          </div>
+        </div>
+        <div class="status-indicator">
+          <span class="status-dot"></span>
+          <span class="status-text">NATIVE MODE</span>
+        </div>
+      </header>
+
+      <div class="cyber-content">
+        <aside class="cyber-sidebar">
+          <div class="panel-header">
+            <div class="panel-icon"></div>
+            <span>文件选择器</span>
+          </div>
+          
+          <div class="file-grid">
+            <button class="cyber-btn active" data-type="pdf">
+              <span>PDF 文档</span>
+              <span class="btn-glow"></span>
+            </button>
+            <button class="cyber-btn" data-type="image">
+              <span>图片文件</span>
+              <span class="btn-glow"></span>
+            </button>
+            <button class="cyber-btn" data-type="markdown">
+              <span>Markdown</span>
+              <span class="btn-glow"></span>
+            </button>
+            <button class="cyber-btn" data-type="text">
+              <span>文本文件</span>
+              <span class="btn-glow"></span>
+            </button>
+          </div>
+
+          <div class="divider"><span class="divider-text">自定义</span></div>
+
+          <input
+            type="text"
+            placeholder="输入文件链接..."
+            class="cyber-input"
+            id="custom-url-input"
+          />
+
+          <div class="divider"><span class="divider-text">本地文件</span></div>
+
+          <label class="cyber-upload">
+            <input
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.svg,.md,.txt,.docx,.xlsx,.pptx"
+              id="file-input"
+              hidden
+            />
+            <span class="upload-text">上传本地文件</span>
+          </label>
+        </aside>
+
+        <main class="cyber-main">
+          <div class="preview-panel">
+            <div class="panel-header">
+              <div class="file-info">
+                <span class="file-name" id="file-name">PDF 文档</span>
+              </div>
+              <div class="file-meta">
+                <span class="meta-badge" id="file-type">PDF</span>
+              </div>
+            </div>
+            
+            <div class="preview-container">
+              <div class="preview-border">
+                <div class="corner tl"></div>
+                <div class="corner tr"></div>
+                <div class="corner bl"></div>
+                <div class="corner br"></div>
+              </div>
+              <universal-file-preview
+                id="preview-element"
+                src="https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf"
+                width="100%"
+                height="100%"
+              ></universal-file-preview>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script type="module">
+      import { registerWebComponent } from 'universal-file-preview/web-component';
+      import 'universal-file-preview/style.css';
+      
+      registerWebComponent();
+
+      const sampleFiles = {
+        pdf: {
+          url: 'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf',
+          type: 'pdf',
+          name: 'PDF 文档'
+        },
+        image: {
+          url: 'https://picsum.photos/800/600',
+          type: 'image',
+          name: '图片文件'
+        },
+        markdown: {
+          url: 'https://raw.githubusercontent.com/markedjs/marked/master/README.md',
+          type: 'markdown',
+          name: 'Markdown'
+        },
+        text: {
+          url: 'https://raw.githubusercontent.com/vuejs/core/main/README.md',
+          type: 'text',
+          name: '文本文件'
+        }
+      };
+
+      const previewElement = document.getElementById('preview-element');
+      const fileNameEl = document.getElementById('file-name');
+      const fileTypeEl = document.getElementById('file-type');
+      const buttons = document.querySelectorAll('.cyber-btn[data-type]');
+      const customUrlInput = document.getElementById('custom-url-input');
+      const fileInput = document.getElementById('file-input');
+
+      function updatePreview(url, type, name) {
+        previewElement.setAttribute('src', url);
+        previewElement.setAttribute('file-type', type);
+        fileNameEl.textContent = name;
+        fileTypeEl.textContent = type.toUpperCase();
+      }
+
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          buttons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const type = btn.dataset.type;
+          const file = sampleFiles[type];
+          updatePreview(file.url, file.type, file.name);
+          customUrlInput.value = '';
+        });
+      });
+
+      customUrlInput.addEventListener('input', (e) => {
+        const url = e.target.value;
+        if (url) {
+          buttons.forEach(b => b.classList.remove('active'));
+          const ext = url.split('.').pop()?.toLowerCase()?.split('?')[0] || '';
+          const typeMap = {
+            pdf: 'pdf', png: 'image', jpg: 'image', jpeg: 'image',
+            gif: 'image', webp: 'image', svg: 'image', md: 'markdown',
+            txt: 'text', docx: 'docx', xlsx: 'xlsx', pptx: 'pptx'
+          };
+          const type = typeMap[ext] || 'text';
+          updatePreview(url, type, '自定义文件');
+        }
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const url = URL.createObjectURL(file);
+          const ext = file.name.split('.').pop()?.toLowerCase() || '';
+          const typeMap = {
+            pdf: 'pdf', png: 'image', jpg: 'image', jpeg: 'image',
+            gif: 'image', webp: 'image', svg: 'image', md: 'markdown',
+            txt: 'text', docx: 'docx', xlsx: 'xlsx', pptx: 'pptx'
+          };
+          const type = typeMap[ext] || 'text';
+          buttons.forEach(b => b.classList.remove('active'));
+          updatePreview(url, type, file.name);
+        }
+      });
+    </script>
+  </body>
+</html>

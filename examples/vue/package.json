@@ -1,0 +1,24 @@
+{
+  "name": "universal-file-preview-demo-vue",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.3.0",
+    "universal-file-preview": "file:../..",
+    "pdfjs-dist": "^3.11.174",
+    "marked": "^9.1.0",
+    "docx-preview": "^0.1.20",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.5.0",
+    "typescript": "^5.3.0",
+    "vite": "^5.0.0"
+  }
+}
