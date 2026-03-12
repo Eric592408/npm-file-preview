@@ -1,5 +1,5 @@
 {
-  "name": "universal-file-preview",
+  "name": "@eric_bs/universal-file-preview",
   "version": "1.0.0",
   "description": "A universal file preview library for web applications, supporting PDF, images, Office documents and more",
   "type": "module",
