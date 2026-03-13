@@ -10,11 +10,7 @@
   },
   "dependencies": {
     "vue": "^3.3.0",
-    "universal-file-preview": "file:../..",
-    "pdfjs-dist": "^3.11.174",
-    "marked": "^9.1.0",
-    "docx-preview": "^0.1.20",
-    "xlsx": "^0.18.5"
+    "@eric_bs/universal-file-preview": "file:../.."
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.5.0",

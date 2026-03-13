@@ -50,12 +50,14 @@
   ],
   "author": "wf.j",
   "license": "MIT",
-  "peerDependencies": {
+  "dependencies": {
     "pdfjs-dist": "^3.11.174",
     "marked": "^9.1.0",
     "docx-preview": "^0.1.20",
     "pptx-preview": "^1.0.5",
-    "xlsx": "^0.18.5",
+    "xlsx": "^0.18.5"
+  },
+  "peerDependencies": {
     "vue": "^3.3.0"
   },
   "peerDependenciesMeta": {
