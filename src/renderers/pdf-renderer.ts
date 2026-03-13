@@ -1,57 +1,21 @@
 import type { Renderer, RenderContext } from '../types';
 import { ErrorCode, createError } from '../utils';
+import {
+  getDocument,
+  GlobalWorkerOptions,
+  version,
+  type PDFDocumentProxy,
+} from 'pdfjs-dist';
 
-interface PDFDocument {
-  numPages: number;
-  getPage(pageNumber: number): Promise<PDFPage>;
-}
-
-interface PDFPage {
-  view: number[];
-  getViewport(options: { scale: number }): PDFViewport;
-  render(options: {
-    canvasContext: CanvasRenderingContext2D;
-    viewport: PDFViewport;
-  }): { promise: Promise<void> };
-  getTextContent(): Promise<{ items: Array<{ str: string; transform: number[]; width: number; height: number }> }>;
-}
-
-interface PDFViewport {
-  width: number;
-  height: number;
-  scale: number;
-}
-
-interface PDFJS {
-  getDocument(options: { url: string; cMapUrl?: string; cMapPacked?: boolean }): {
-    promise: Promise<PDFDocument>;
-  };
-  GlobalWorkerOptions: { workerSrc: string };
-}
-
-let pdfjsPromise: Promise<PDFJS & { version: string }> | null = null;
-
-async function loadPDFJS(): Promise<PDFJS & { version: string }> {
-  if (pdfjsPromise) {
-    return pdfjsPromise;
-  }
-
-  pdfjsPromise = import('pdfjs-dist').then((module) => {
-    const pdfjs = module as unknown as PDFJS & { version: string };
-    if (typeof window !== 'undefined') {
-      pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-    }
-    return pdfjs;
-  });
-
-  return pdfjsPromise;
+if (typeof window !== 'undefined' && GlobalWorkerOptions) {
+  GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
 }
 
 export class PDFRenderer implements Renderer {
   name = 'pdf';
   supportedTypes = ['pdf'] as const;
 
-  private currentDocument: PDFDocument | null = null;
+  private currentDocument: PDFDocumentProxy | null = null;
   private totalPages: number = 0;
   private scale: number = 1;
   private container: HTMLElement | null = null;
@@ -72,13 +36,11 @@ export class PDFRenderer implements Renderer {
     container.classList.add('ufp-pdf-container');
 
     try {
-      const pdfjs = await loadPDFJS();
-
       onProgress?.(10);
 
-      const loadingTask = pdfjs.getDocument({
+      const loadingTask = getDocument({
         url: fileInfo.url,
-        cMapUrl: `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/cmaps/`,
+        cMapUrl: `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/cmaps/`,
         cMapPacked: true,
       });
 

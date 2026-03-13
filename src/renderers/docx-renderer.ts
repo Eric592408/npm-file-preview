@@ -1,43 +1,6 @@
 import type { Renderer, RenderContext } from '../types';
 import { ErrorCode, createError, fetchFile } from '../utils';
-
-interface DocxPreviewAPI {
-  renderAsync(
-    data: Blob | ArrayBuffer | string,
-    bodyContainer: HTMLElement,
-    styleContainer?: HTMLElement | null,
-    options?: {
-      className?: string;
-      inWrapper?: boolean;
-      ignoreWidth?: boolean;
-      ignoreHeight?: boolean;
-      ignoreFonts?: boolean;
-      breakPages?: boolean;
-      ignoreLastRenderedPageBreak?: boolean;
-      experimental?: boolean;
-      trimXmlDeclaration?: boolean;
-      useBase64URL?: boolean;
-      renderHeaders?: boolean;
-      renderFooters?: boolean;
-      renderFootnotes?: boolean;
-      renderEndnotes?: boolean;
-    }
-  ): Promise<void>;
-}
-
-let docxPreviewPromise: Promise<DocxPreviewAPI> | null = null;
-
-async function loadDocxPreview(): Promise<DocxPreviewAPI> {
-  if (docxPreviewPromise) {
-    return docxPreviewPromise;
-  }
-
-  docxPreviewPromise = import('docx-preview').then((module) => {
-    return module as unknown as DocxPreviewAPI;
-  });
-
-  return docxPreviewPromise;
-}
+import { renderAsync } from 'docx-preview';
 
 export class DocxRenderer implements Renderer {
   name = 'docx';
@@ -62,15 +25,12 @@ export class DocxRenderer implements Renderer {
       const blob = await response.blob();
       onProgress?.(50);
 
-      const docxPreview = await loadDocxPreview();
-      onProgress?.(60);
-
       const wrapper = document.createElement('div');
       wrapper.className = 'ufp-docx-wrapper';
 
       container.appendChild(wrapper);
 
-      await docxPreview.renderAsync(blob, wrapper, null, {
+      await renderAsync(blob, wrapper, undefined, {
         className: 'ufp-docx-content',
         inWrapper: true,
         ignoreWidth: false,

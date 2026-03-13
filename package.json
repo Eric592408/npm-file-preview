@@ -1,6 +1,6 @@
 {
   "name": "@eric_bs/universal-file-preview",
-  "version": "1.0.1",
+  "version": "1.0.0-beta.1",
   "description": "A universal file preview library for web applications, supporting PDF, images, Office documents and more",
   "type": "module",
   "main": "./dist/index.cjs",

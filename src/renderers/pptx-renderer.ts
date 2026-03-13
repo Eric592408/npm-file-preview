@@ -1,35 +1,10 @@
 import type { Renderer, RenderContext } from '../types';
 import { ErrorCode, createError, fetchFile } from '../utils';
-
-interface PptxPreviewAPI {
-  render(
-    options: {
-      pptx: Blob | ArrayBuffer;
-      targetElement: HTMLElement;
-      slideScale?: number;
-    }
-  ): Promise<void>;
-}
-
-let pptxPreviewPromise: Promise<PptxPreviewAPI> | null = null;
-
-async function loadPptxPreview(): Promise<PptxPreviewAPI> {
-  if (pptxPreviewPromise) {
-    return pptxPreviewPromise;
-  }
-
-  pptxPreviewPromise = import('pptx-preview').then((module) => {
-    return module as unknown as PptxPreviewAPI;
-  });
-
-  return pptxPreviewPromise;
-}
+import { init } from 'pptx-preview';
 
 export class PptxRenderer implements Renderer {
   name = 'pptx';
   supportedTypes = ['pptx'] as const;
-
-  private scale: number = 1;
 
   canHandle(fileType: string): boolean {
     return fileType === 'pptx';
@@ -50,9 +25,6 @@ export class PptxRenderer implements Renderer {
       const blob = await response.blob();
       onProgress?.(50);
 
-      const pptxPreview = await loadPptxPreview();
-      onProgress?.(60);
-
       const wrapper = document.createElement('div');
       wrapper.className = 'ufp-pptx-wrapper';
 
@@ -60,11 +32,14 @@ export class PptxRenderer implements Renderer {
       container.appendChild(controls);
       container.appendChild(wrapper);
 
-      await pptxPreview.render({
-        pptx: blob,
-        targetElement: wrapper,
-        slideScale: this.scale,
+      const previewer = init(wrapper, {
+        width: wrapper.clientWidth || 800,
+        height: 600,
+        mode: 'list',
       });
+
+      const arrayBuffer = await blob.arrayBuffer();
+      await previewer.preview(arrayBuffer);
 
       onProgress?.(100);
       onComplete?.();

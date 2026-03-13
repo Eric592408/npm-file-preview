@@ -11,7 +11,7 @@ const uploadedFileType = ref<FileType | null>(null)
 
 const sampleFiles: Record<string, { url: string; type: FileType; name: string; icon: string }> = {
   pdf: {
-    url: 'https://xnmgrcdn-uat.bscone.com/KnowledgeBase/KB000196/XN-202601-0325/%E6%99%BA%E8%83%BD%E4%BD%93%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1+%281%29.pdf?Expires=1773371906&Signature=NfharAsf1JzE5RuprZ78VKWRrZwtQdD9DRSH~o6WiGqPB-jfsQu78E7HD9Bnb3-ffIIdnDDPaCrSmov2bW4b6LTwUP9PS6d2Z9BJHVw9EWcP3CfLWX8Ld3RYYaPl-8NcAou2xVuC~HZtEQ2REpR0rDLph4AVGy8B2mih5HiX-exeRtx1b-eouV-coSzbna5AnSWIZJ3zG2RkzS1Lty24xPA3S05yJ7AmPVz8Act-Gzone-TfTAp0QFO5bN~qoHOfEfX~28mi7~62-8h6wOXFTKjZFG0iZ-FI5vHCN8uZeMCssyqKXJLMRBiz7~A6sTZ~BZMuqe53~XDfSNO-9ShTMg__&Key-Pair-Id=K3I2J9OEQTONLK',
+    url: 'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf',
     type: 'pdf',
     name: 'PDF 文档',
     icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'
@@ -252,9 +252,6 @@ function detectFileTypeFromName(fileName: string): FileType {
               <div class="corner bl"></div>
               <div class="corner br"></div>
             </div>
-            {{ currentFile.url }}
-            {{ currentFile.type }}
-            {{ globalConfig }}
             <FilePreview
               :src="currentFile.url"
               :file-type="currentFile.type"

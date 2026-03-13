@@ -1,42 +1,12 @@
 import type { Renderer, RenderContext } from '../types';
 import { ErrorCode, createError, fetchFile } from '../utils';
-
-interface XLSXWorkSheet {
-  [key: string]: unknown;
-}
-
-interface XLSXWorkBook {
-  SheetNames: string[];
-  Sheets: Record<string, XLSXWorkSheet>;
-}
-
-interface XLSXAPI {
-  read(data: ArrayBuffer, options: { type: string }): XLSXWorkBook;
-  utils: {
-    sheet_to_html(worksheet: XLSXWorkSheet, options?: { editable?: boolean }): string;
-    sheet_to_json(worksheet: XLSXWorkSheet, options?: { header?: unknown }): unknown[];
-  };
-}
-
-let xlsxPromise: Promise<XLSXAPI> | null = null;
-
-async function loadXLSX(): Promise<XLSXAPI> {
-  if (xlsxPromise) {
-    return xlsxPromise;
-  }
-
-  xlsxPromise = import('xlsx').then((module) => {
-    return module as unknown as XLSXAPI;
-  });
-
-  return xlsxPromise;
-}
+import * as XLSX from 'xlsx';
 
 export class XLSXRenderer implements Renderer {
   name = 'xlsx';
   supportedTypes = ['xlsx', 'xls'] as const;
 
-  private currentWorkbook: XLSXWorkBook | null = null;
+  private currentWorkbook: XLSX.WorkBook | null = null;
   private container: HTMLElement | null = null;
 
   canHandle(fileType: string): boolean {
@@ -59,9 +29,6 @@ export class XLSXRenderer implements Renderer {
       const arrayBuffer = await response.arrayBuffer();
       onProgress?.(50);
 
-      const XLSX = await loadXLSX();
-      onProgress?.(60);
-
       this.currentWorkbook = XLSX.read(arrayBuffer, { type: 'array' });
 
       if (!this.currentWorkbook.SheetNames.length) {
@@ -75,7 +42,7 @@ export class XLSXRenderer implements Renderer {
       wrapper.className = 'ufp-xlsx-wrapper';
       container.appendChild(wrapper);
 
-      this.renderSheet(0, XLSX);
+      this.renderSheet(0);
 
       onProgress?.(100);
       onComplete?.();
@@ -117,7 +84,7 @@ export class XLSXRenderer implements Renderer {
     return controls;
   }
 
-  private async renderSheet(sheetIndex: number, XLSX?: XLSXAPI): Promise<void> {
+  private renderSheet(sheetIndex: number): void {
     if (!this.container || !this.currentWorkbook) return;
 
     const wrapper = this.container.querySelector('.ufp-xlsx-wrapper');
@@ -126,9 +93,7 @@ export class XLSXRenderer implements Renderer {
     const sheetName = this.currentWorkbook.SheetNames[sheetIndex];
     const worksheet = this.currentWorkbook.Sheets[sheetName];
 
-    const xlsxLib = XLSX || (await loadXLSX());
-
-    const html = xlsxLib.utils.sheet_to_html(worksheet, { editable: false });
+    const html = XLSX.utils.sheet_to_html(worksheet, { editable: false });
 
     wrapper.innerHTML = this.processTableHtml(html);
 
@@ -162,8 +127,8 @@ export class XLSXRenderer implements Renderer {
     return !isNaN(parseFloat(value)) && isFinite(Number(value));
   }
 
-  private async switchSheet(sheetIndex: number): Promise<void> {
-    await this.renderSheet(sheetIndex);
+  private switchSheet(sheetIndex: number): void {
+    this.renderSheet(sheetIndex);
   }
 
   destroy(container: HTMLElement): void {

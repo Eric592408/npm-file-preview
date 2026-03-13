@@ -1,24 +1,6 @@
 import type { Renderer, RenderContext } from '../types';
 import { ErrorCode, createError, fetchFile, escapeHtml } from '../utils';
-
-interface MarkedInstance {
-  parse(text: string, options?: Record<string, unknown>): string | Promise<string>;
-}
-
-let markedPromise: Promise<MarkedInstance> | null = null;
-
-async function loadMarked(): Promise<MarkedInstance> {
-  if (markedPromise) {
-    return markedPromise;
-  }
-
-  markedPromise = import('marked').then((module) => {
-    const marked = module as unknown as MarkedInstance & { marked?: MarkedInstance };
-    return marked.marked || marked;
-  });
-
-  return markedPromise;
-}
+import { marked } from 'marked';
 
 export class MarkdownRenderer implements Renderer {
   name = 'markdown';
@@ -43,10 +25,7 @@ export class MarkdownRenderer implements Renderer {
       const markdown = await response.text();
       onProgress?.(50);
 
-      const marked = await loadMarked();
-      onProgress?.(70);
-
-      const html = await this.renderMarkdown(marked, markdown);
+      const html = await this.renderMarkdown(markdown);
       onProgress?.(90);
 
       const wrapper = document.createElement('div');
@@ -71,12 +50,9 @@ export class MarkdownRenderer implements Renderer {
     }
   }
 
-  private async renderMarkdown(marked: MarkedInstance, text: string): Promise<string> {
+  private async renderMarkdown(text: string): Promise<string> {
     try {
-      const result = marked.parse(text, { async: false } as Record<string, unknown>);
-      if (result instanceof Promise) {
-        return await result;
-      }
+      const result = await marked.parse(text, { async: true });
       return result;
     } catch {
       return `<pre>${escapeHtml(text)}</pre>`;
